@@ -31,7 +31,6 @@ window.onload = function() {
 
     const wktFormat = new ol.format.WKT();
 
-   
     const satelliteSource = new ol.source.Vector();
     const satelliteLayer = new ol.layer.Vector({
         source: satelliteSource,
@@ -55,7 +54,6 @@ window.onload = function() {
             const featuresArray = [];
 
             if (response && response.data && response.data.length > 0) {
-                
                 response.data.forEach(function(product) {
                     if (product.geometry) {
                         try {
@@ -91,7 +89,6 @@ window.onload = function() {
             console.error("Eroare la încărcarea fișierului productResponse.json: ", status, error);
         }
     });
-
 
     const vectorSource = new ol.source.Vector();
     const vectorLayer = new ol.layer.Vector({
@@ -163,27 +160,31 @@ window.onload = function() {
         reader.readAsText(file);
     });
 
- 
 
+   
     $('#search').on('keypress', function(e) {
         if (e.which === 13) {
             const query = $(this).val().trim();
             if (!query) return;
             
-            const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+            const geonamesUsername = 'bambiiiiiiiiiiiiiiii';
+            
+            const geonamesUrl = `https://secure.geonames.org/searchJSON?q=${encodeURIComponent(query)}&maxRows=1&username=${geonamesUsername}`;
+
             $(this).css('opacity', '0.5');
 
             $.ajax({
-                url: nominatimUrl,
+                url: geonamesUrl,
                 method: 'GET',
                 dataType: 'json',
                 success: function(data) {
-                    if (data && data.length > 0) {
-                        const location = data[0];
-                        const lon = parseFloat(location.lon);
+                    if (data && data.geonames && data.geonames.length > 0) {
+                        const location = data.geonames[0];
+                        
+                        const lon = parseFloat(location.lng);
                         const lat = parseFloat(location.lat);
 
-                        console.log(`Navigăm către: ${location.display_name} [${lon}, ${lat}]`);
+                        console.log(`[GeoNames] Navigăm către: ${location.name}, ${location.countryName} [${lon}, ${lat}]`);
 
                         map.getView().animate({
                             center: ol.proj.fromLonLat([lon, lat]),
@@ -194,11 +195,11 @@ window.onload = function() {
                         
                         $('#search').val(''); 
                     } else {
-                        alert("Locația nu a fost găsită.");
+                        alert("Locația nu a fost găsită de GeoNames.");
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error("Eroare căutare: ", status, error);
+                    console.error("Eroare căutare GeoNames: ", status, error);
                     alert("A apărut o eroare la căutarea locației.");
                 },
                 complete: function() {
