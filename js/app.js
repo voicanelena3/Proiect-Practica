@@ -18,43 +18,40 @@ window.onload = function() {
             new ol.control.FullScreen(),
             new ol.control.ScaleLine(),
             new ol.control.ZoomSlider(),
-            new ol.control.Zoom(),
             mousePositionControl
         ]),
         view: new ol.View({
             center: ol.proj.fromLonLat([25.0, 46.0]),
-            zoom: 7,
-            minZoom: 3
+            zoom: 6.5,
+            minZoom: 3,
         })
     });
 
     console.log("Harta și instrumentele de navigare au fost inițializate cu succes!");
 
-    $('#search').on('keypress', function(e) {
+   $('#search').on('keypress', function(e) {
         if (e.which === 13) {
             const query = $(this).val().trim();
             
             if (!query) {
                 return;
             }
-
-            const username = 'Contul_GeoNames';
             
-            const geoNamesUrl = `https://secure.geonames.org/searchJSON?q=${encodeURIComponent(query)}&maxRows=1&username=Username`;
+            const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
 
             $(this).css('opacity', '0.5');
 
             $.ajax({
-                url: geoNamesUrl,
+                url: nominatimUrl,
                 method: 'GET',
-                dataType: 'jsonp',
+                dataType: 'json',
                 success: function(data) {
-                    if (data.geonames && data.geonames.length > 0) {
-                        const location = data.geonames[0];
-                        const lon = parseFloat(location.lng);
+                    if (data && data.length > 0) {
+                        const location = data[0];
+                        const lon = parseFloat(location.lon);
                         const lat = parseFloat(location.lat);
 
-                        console.log(`Navigăm către: ${location.name} [${lon}, ${lat}]`);
+                        console.log(`Navigăm către: ${location.display_name} [${lon}, ${lat}]`);
 
                         map.getView().animate({
                             center: ol.proj.fromLonLat([lon, lat]),
@@ -65,12 +62,12 @@ window.onload = function() {
                         
                         $('#search').val(''); 
                     } else {
-                        alert("Locația nu a fost găsită în baza de date GeoNames.");
+                        alert("Locația nu a fost găsită.");
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error("Eroare AJAX GeoNames: ", status, error);
-                    alert("A apărut o eroare la comunicarea cu serverul GeoNames. Verifică consola pentru detalii.");
+                    console.error("Eroare căutare: ", status, error);
+                    alert("A apărut o eroare la căutarea locației.");
                 },
                 complete: function() {
                     $('#search').css('opacity', '1');
