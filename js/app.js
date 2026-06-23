@@ -18,19 +18,20 @@ window.onload = function() {
             new ol.control.FullScreen(),
             new ol.control.ScaleLine(),
             new ol.control.ZoomSlider(),
+            new ol.control.Zoom(),
             mousePositionControl
         ]),
         view: new ol.View({
             center: ol.proj.fromLonLat([25.0, 46.0]),
-            zoom: 6.5,
-            minZoom: 3,
+            zoom: 7,
+            minZoom: 3
         })
     });
 
     console.log("Harta și instrumentele de navigare au fost inițializate cu succes!");
 
     $('#search').on('keypress', function(e) {
-        if (e.which === 13) { // Tasta Enter
+        if (e.which === 13) {
             const query = $(this).val().trim();
             
             if (!query) {
@@ -39,7 +40,7 @@ window.onload = function() {
 
             const username = 'Contul_GeoNames';
             
-            const geoNamesUrl = `http://api.geonames.org/searchJSON?q=${encodeURIComponent(query)}&maxRows=1&username=${username}`;
+            const geoNamesUrl = `https://secure.geonames.org/searchJSON?q=${encodeURIComponent(query)}&maxRows=1&username=Username`;
 
             $(this).css('opacity', '0.5');
 
@@ -53,7 +54,7 @@ window.onload = function() {
                         const lon = parseFloat(location.lng);
                         const lat = parseFloat(location.lat);
 
-                        console.log(`Zburăm către: ${location.name} [${lon}, ${lat}]`);
+                        console.log(`Navigăm către: ${location.name} [${lon}, ${lat}]`);
 
                         map.getView().animate({
                             center: ol.proj.fromLonLat([lon, lat]),
