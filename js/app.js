@@ -67,6 +67,8 @@ window.onload = function() {
         zIndex: 100 
     });
     map.addLayer(intersectionLayer);
+    // Extent saved after manual file upload — used by re-center button
+    let uploadedExtent = null;
 
     $('#json-file').on('change', function(e) {
         const file = e.target.files[0];
@@ -104,10 +106,20 @@ window.onload = function() {
 
                 if (manualFeaturesArray.length > 0) {
                     vectorSource.addFeatures(manualFeaturesArray);
-                    map.getView().fit(vectorSource.getExtent(), {
+
+                    // Save extent and fit map
+                    uploadedExtent = vectorSource.getExtent();
+                    map.getView().fit(uploadedExtent, {
                         duration: 1200,
                         padding: [50, 50, 50, 50]
                     });
+
+                    // Activate re-center button
+                    const recenterBtn = document.getElementById('btn-recenter');
+                    recenterBtn.disabled = false;
+                    recenterBtn.title = 'Revenire la datele încărcate';
+
+                    console.log(`Urcat manual cu succes: ${manualFeaturesArray.length} geometrii.`);
                 } else {
                     alert("Nu s-au găsit geometrii valide în fișierul selectat.");
                 }
@@ -116,6 +128,16 @@ window.onload = function() {
             }
         };
         reader.readAsText(file);
+    });
+
+    document.getElementById('btn-recenter').addEventListener('click', function() {
+        if (uploadedExtent) {
+            map.getView().fit(uploadedExtent, {
+                duration: 1200,
+                padding: [50, 50, 50, 50],
+                easing: ol.easing.easeOut
+            });
+        }
     });
 
     $('#search').on('keypress', function(e) {
