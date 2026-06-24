@@ -56,17 +56,13 @@ window.onload = function () {
     const intersectionLayer = new ol.layer.Vector({
         source: intersectionSource,
         style: new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: '#ff0000',
-                width: 4
-            }),
-            fill: new ol.style.Fill({
-                color: 'rgba(255, 0, 0, 0.5)'
-            })
+            stroke: new ol.style.Stroke({ color: '#ff0000', width: 4 }),
+            fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.5)' })
         }),
         zIndex: 100
     });
     map.addLayer(intersectionLayer);
+
     let uploadedExtent = null;
 
     $('#json-file').on('change', function (e) {
@@ -94,8 +90,7 @@ window.onload = function () {
                             }
                         }
                     });
-                }
-                else if (response.type === "FeatureCollection" || response.type === "Feature") {
+                } else if (response.type === "FeatureCollection" || response.type === "Feature") {
                     const geojsonFeatures = geojsonFormat.readFeatures(response, {
                         dataProjection: 'EPSG:4326',
                         featureProjection: map.getView().getProjection()
@@ -138,35 +133,26 @@ window.onload = function () {
     });
 
     $('#search').on('keypress', function (e) {
+        if (e.which !== 13) return;
 
-        if (e.which !== 13) {
-            return;
-        }
-
-        const query = $(this).val().trim();
-
-        if (!query) {
-            return;
-        }
+        const raw = $(this).val().trim();
+        const query = raw.includes(',') ? raw.split(',')[0].trim() : raw;
+        if (!query) return;
+        $(this).val(query);
 
         const geonamesUsername = 'bambiiiiiiiiiiiiiiii';
-
         const geonamesUrl = `https://secure.geonames.org/searchJSON?name_startsWith=${encodeURIComponent(query)}&maxRows=10&orderby=relevance&isNameRequired=true&cities=cities1000&username=${geonamesUsername}`;
 
         const resultsContainer = $('#search-results');
-
         resultsContainer.hide();
         resultsContainer.empty();
-
         $(this).css('opacity', '0.5');
 
         $.ajax({
             url: geonamesUrl,
             method: 'GET',
             dataType: 'json',
-
             success: function (data) {
-
                 if (!data || !data.geonames || data.geonames.length === 0) {
                     alert("Locația nu a fost găsită.");
                     return;
@@ -175,21 +161,14 @@ window.onload = function () {
                 resultsContainer.show();
 
                 data.geonames.forEach(function (location) {
-
                     const item = $(`
-                    <div class="search-result-item">
-                        <div class="search-result-name">
-                            ${location.name}
+                        <div class="search-result-item">
+                            <div class="search-result-name">${location.name}</div>
+                            <div class="search-result-country">${location.adminName1 || ''}, ${location.countryName}</div>
                         </div>
-
-                        <div class="search-result-country">
-                            ${location.adminName1 || ''}, ${location.countryName}
-                        </div>
-                    </div>
-                `);
+                    `);
 
                     item.on('click', function () {
-
                         const lon = parseFloat(location.lng);
                         const lat = parseFloat(location.lat);
 
@@ -200,10 +179,7 @@ window.onload = function () {
                             easing: ol.easing.easeOut
                         });
 
-                        $('#search').val(
-                            `${location.name}, ${location.countryName}`
-                        );
-
+                        $('#search').val(`${location.name}, ${location.countryName}`);
                         resultsContainer.empty();
                         resultsContainer.hide();
                     });
@@ -211,34 +187,34 @@ window.onload = function () {
                     resultsContainer.append(item);
                 });
             },
-
             error: function () {
                 alert("A apărut o eroare la căutarea locației.");
             },
-
             complete: function () {
                 $('#search').css('opacity', '1');
             }
         });
     });
 
+    $(document).on('click', function (e) {
+        if (
+            !$(e.target).closest('#search').length &&
+            !$(e.target).closest('#search-results').length
+        ) {
+            $('#search-results').hide();
+        }
+    });
+
     let selectedFeaturesArray = [];
 
     const selectedStyle = new ol.style.Style({
-        stroke: new ol.style.Stroke({
-            color: '#ffffff',
-            width: 3
-        }),
-        fill: new ol.style.Fill({
-            color: 'rgba(255, 255, 255, 0.3)'
-        })
+        stroke: new ol.style.Stroke({ color: '#ffffff', width: 3 }),
+        fill: new ol.style.Fill({ color: 'rgba(255, 255, 255, 0.3)' })
     });
 
     function removeStatsPanel() {
         const panel = document.getElementById('stats-panel');
-        if (panel) {
-            panel.classList.add('hidden');
-        }
+        if (panel) panel.classList.add('hidden');
     }
 
     function updateAndShowStatsPanel(areaKm, percent1, percent2) {
@@ -288,7 +264,6 @@ window.onload = function () {
                     featureProjection: map.getView().getProjection(),
                     dataProjection: 'EPSG:4326'
                 });
-
                 const geojson2 = geojsonFormat.writeFeatureObject(feature2, {
                     featureProjection: map.getView().getProjection(),
                     dataProjection: 'EPSG:4326'
@@ -302,20 +277,16 @@ window.onload = function () {
                             dataProjection: 'EPSG:4326',
                             featureProjection: map.getView().getProjection()
                         });
-
                         intersectionSource.addFeatures([intersectionFeature]);
 
                         const areaInSquareMeters = turf.area(intersectedGeoJSON);
                         const areaInSquareKm = areaInSquareMeters / 1000000;
-
                         const areaPolygon1 = turf.area(geojson1);
                         const areaPolygon2 = turf.area(geojson2);
-
                         const overlapPercent1 = (areaInSquareMeters / areaPolygon1) * 100;
                         const overlapPercent2 = (areaInSquareMeters / areaPolygon2) * 100;
 
                         updateAndShowStatsPanel(areaInSquareKm, overlapPercent1, overlapPercent2);
-
                     } else {
                         alert("Poligoanele selectate nu se intersectează.");
                         selectedFeaturesArray.forEach(f => f.setStyle(null));
@@ -337,26 +308,17 @@ window.onload = function () {
             removeStatsPanel();
         }
     });
+
     const drawSource = new ol.source.Vector();
     const drawLayer = new ol.layer.Vector({
         source: drawSource,
         style: new ol.style.Style({
-            fill: new ol.style.Fill({
-                color: 'rgba(255, 204, 51, 0.3)'
-            }),
-            stroke: new ol.style.Stroke({
-                color: '#ffcc33',
-                width: 2.5
-            }),
+            fill: new ol.style.Fill({ color: 'rgba(255, 204, 51, 0.3)' }),
+            stroke: new ol.style.Stroke({ color: '#ffcc33', width: 2.5 }),
             image: new ol.style.Circle({
                 radius: 6,
-                fill: new ol.style.Fill({
-                    color: '#ffcc33'
-                }),
-                stroke: new ol.style.Stroke({
-                    color: '#1a1c1e',
-                    width: 1.5
-                })
+                fill: new ol.style.Fill({ color: '#ffcc33' }),
+                stroke: new ol.style.Stroke({ color: '#1a1c1e', width: 1.5 })
             })
         })
     });
@@ -369,18 +331,11 @@ window.onload = function () {
 
     function addDrawInteraction() {
         const value = drawTypeSelect.value;
-
         if (value !== 'None') {
-            drawInteraction = new ol.interaction.Draw({
-                source: drawSource,
-                type: value
-            });
+            drawInteraction = new ol.interaction.Draw({ source: drawSource, type: value });
             map.addInteraction(drawInteraction);
 
-            snapInteraction = new ol.interaction.Snap({
-                source: drawSource,
-                pixelTolerance: 15
-            });
+            snapInteraction = new ol.interaction.Snap({ source: drawSource, pixelTolerance: 15 });
             map.addInteraction(snapInteraction);
 
             document.getElementById('map').style.cursor = 'crosshair';
@@ -390,24 +345,15 @@ window.onload = function () {
     }
 
     drawTypeSelect.addEventListener('change', function () {
-        if (drawInteraction) {
-            map.removeInteraction(drawInteraction);
-        }
-        if (snapInteraction) {
-            map.removeInteraction(snapInteraction);
-        }
+        if (drawInteraction) map.removeInteraction(drawInteraction);
+        if (snapInteraction) map.removeInteraction(snapInteraction);
         addDrawInteraction();
     });
 
     clearDrawButton.addEventListener('click', function () {
         if (confirm("Ești sigur că vrei să ștergi desenele de pe hartă? Datele satelitare vor fi păstrate.")) {
-            if (drawInteraction) {
-                drawInteraction.abortDrawing();
-            }
-            if (typeof drawSource !== 'undefined') {
-                drawSource.clear();
-            }
-
+            if (drawInteraction) drawInteraction.abortDrawing();
+            if (typeof drawSource !== 'undefined') drawSource.clear();
             console.log("Desenele manuale au fost șterse, datele din fișier au rămas intacte.");
         }
     });
