@@ -30,81 +30,43 @@ window.onload = function() {
     console.log("Harta și instrumentele de navigare au fost inițializate cu succes!");
 
     const wktFormat = new ol.format.WKT();
+    const geojsonFormat = new ol.format.GeoJSON(); 
 
     const satelliteSource = new ol.source.Vector();
     const satelliteLayer = new ol.layer.Vector({
         source: satelliteSource,
         style: new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: '#ff5500', 
-                width: 2
-            }),
-            fill: new ol.style.Fill({
-                color: 'rgba(255, 85, 0, 0.15)' 
-            })
+            stroke: new ol.style.Stroke({ color: '#ff5500', width: 2 }),
+            fill: new ol.style.Fill({ color: 'rgba(255, 85, 0, 0.15)' })
         })
     });
     map.addLayer(satelliteLayer);
-
-    $.ajax({
-        url: 'productResponse.json',
-        method: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            const featuresArray = [];
-
-            if (response && response.data && response.data.length > 0) {
-                response.data.forEach(function(product) {
-                    if (product.geometry) {
-                        try {
-                            const feature = wktFormat.readFeature(product.geometry, {
-                                dataProjection: 'EPSG:4326', 
-                                featureProjection: map.getView().getProjection() 
-                            });
-
-                            feature.set('acquisitionDate', product.acquisitionDate);
-                            feature.set('id', product.id);
-
-                            featuresArray.push(feature);
-                        } catch (e) {
-                            console.error("Eroare la citirea unei geometrii WKT individuale:", e);
-                        }
-                    }
-                });
-
-                if (featuresArray.length > 0) {
-                    satelliteSource.addFeatures(featuresArray);
-
-                    map.getView().fit(satelliteSource.getExtent(), {
-                        duration: 1500,
-                        padding: [50, 50, 50, 50]
-                    });
-                    console.log(`Succes! S-au încărcat automat ${featuresArray.length} produse satelitare pe hartă.`);
-                }
-            } else {
-                console.warn("Structura fișierului JSON nu conține array-ul 'data' sau acesta este gol.");
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error("Eroare la încărcarea fișierului productResponse.json: ", status, error);
-        }
-    });
 
     const vectorSource = new ol.source.Vector();
     const vectorLayer = new ol.layer.Vector({
         source: vectorSource,
         style: new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: '#3388ff', 
-                width: 2
-            }),
-            fill: new ol.style.Fill({
-                color: 'rgba(51, 136, 255, 0.2)'
-            })
+            stroke: new ol.style.Stroke({ color: '#3388ff', width: 2 }),
+            fill: new ol.style.Fill({ color: 'rgba(51, 136, 255, 0.2)' })
         })
     });
     map.addLayer(vectorLayer);
 
+    const intersectionSource = new ol.source.Vector();
+    const intersectionLayer = new ol.layer.Vector({
+        source: intersectionSource,
+        style: new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                color: '#ff0000',
+                width: 4
+            }),
+            fill: new ol.style.Fill({
+                color: 'rgba(255, 0, 0, 0.5)' 
+            })
+        }),
+        zIndex: 100 
+    });
+    map.addLayer(intersectionLayer);
     // Extent saved after manual file upload — used by re-center button
     let uploadedExtent = null;
 
@@ -117,7 +79,6 @@ window.onload = function() {
             try {
                 const response = JSON.parse(event.target.result);
                 vectorSource.clear(); 
-
                 const manualFeaturesArray = [];
 
                 if (response && response.data && response.data.length > 0) {
@@ -136,7 +97,6 @@ window.onload = function() {
                     });
                 } 
                 else if (response.type === "FeatureCollection" || response.type === "Feature") {
-                    const geojsonFormat = new ol.format.GeoJSON();
                     const geojsonFeatures = geojsonFormat.readFeatures(response, {
                         dataProjection: 'EPSG:4326',
                         featureProjection: map.getView().getProjection()
@@ -164,7 +124,6 @@ window.onload = function() {
                     alert("Nu s-au găsit geometrii valide în fișierul selectat.");
                 }
             } catch (error) {
-                console.error("Eroare la parsarea JSON-ului:", error);
                 alert("Fișierul selectat nu este un JSON valid.");
             }
         };
@@ -198,11 +157,8 @@ window.onload = function() {
                 success: function(data) {
                     if (data && data.geonames && data.geonames.length > 0) {
                         const location = data.geonames[0];
-                        
                         const lon = parseFloat(location.lng);
                         const lat = parseFloat(location.lat);
-
-                        console.log(`[GeoNames] Navigăm către: ${location.name}, ${location.countryName} [${lon}, ${lat}]`);
 
                         map.getView().animate({
                             center: ol.proj.fromLonLat([lon, lat]),
@@ -210,14 +166,12 @@ window.onload = function() {
                             duration: 1500,
                             easing: ol.easing.easeOut
                         });
-                        
                         $('#search').val(''); 
                     } else {
                         alert("Locația nu a fost găsită de GeoNames.");
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error("Eroare căutare GeoNames: ", status, error);
+                error: function() {
                     alert("A apărut o eroare la căutarea locației.");
                 },
                 complete: function() {
@@ -227,6 +181,121 @@ window.onload = function() {
         }
     });
 
+    let selectedFeaturesArray = [];
+
+    const selectedStyle = new ol.style.Style({
+        stroke: new ol.style.Stroke({
+            color: '#ffffff',
+            width: 3
+        }),
+        fill: new ol.style.Fill({
+            color: 'rgba(255, 255, 255, 0.3)'
+        })
+    });
+
+    function removeStatsPanel() {
+        const panel = document.getElementById('stats-panel');
+        if (panel) {
+            panel.classList.add('hidden');
+        }
+    }
+
+    function updateAndShowStatsPanel(areaKm, percent1, percent2) {
+        const panel = document.getElementById('stats-panel');
+        if (!panel) return;
+
+        document.getElementById('area-val').innerText = areaKm.toFixed(2);
+        document.getElementById('percent1-val').innerText = percent1.toFixed(1) + '%';
+        document.getElementById('percent2-val').innerText = percent2.toFixed(1) + '%';
+
+        document.getElementById('progress1-bar').style.width = Math.min(percent1, 100) + '%';
+        document.getElementById('progress2-bar').style.width = Math.min(percent2, 100) + '%';
+
+        panel.classList.remove('hidden');
+    }
+
+    map.on('click', function(e) {
+        const clickedFeature = map.forEachFeatureAtPixel(e.pixel, function(feature, layer) {
+            if (layer === intersectionLayer) return null;
+            return feature;
+        });
+
+        if (clickedFeature) {
+            if (selectedFeaturesArray.includes(clickedFeature)) {
+                clickedFeature.setStyle(null);
+                selectedFeaturesArray = selectedFeaturesArray.filter(f => f !== clickedFeature);
+                intersectionSource.clear();
+                removeStatsPanel();
+                return;
+            }
+
+            if (selectedFeaturesArray.length === 2) {
+                selectedFeaturesArray.forEach(f => f.setStyle(null));
+                selectedFeaturesArray = [];
+                intersectionSource.clear();
+                removeStatsPanel();
+            }
+
+            selectedFeaturesArray.push(clickedFeature);
+            clickedFeature.setStyle(selectedStyle);
+
+            if (selectedFeaturesArray.length === 2) {
+                const feature1 = selectedFeaturesArray[0];
+                const feature2 = selectedFeaturesArray[1];
+
+                const geojson1 = geojsonFormat.writeFeatureObject(feature1, {
+                    featureProjection: map.getView().getProjection(),
+                    dataProjection: 'EPSG:4326'
+                });
+
+                const geojson2 = geojsonFormat.writeFeatureObject(feature2, {
+                    featureProjection: map.getView().getProjection(),
+                    dataProjection: 'EPSG:4326'
+                });
+
+                try {
+                    const intersectedGeoJSON = turf.intersect(geojson1, geojson2);
+
+                    if (intersectedGeoJSON) {
+                        const intersectionFeature = geojsonFormat.readFeature(intersectedGeoJSON, {
+                            dataProjection: 'EPSG:4326',
+                            featureProjection: map.getView().getProjection()
+                        });
+
+                        intersectionSource.addFeatures([intersectionFeature]);
+
+                        const areaInSquareMeters = turf.area(intersectedGeoJSON);
+                        const areaInSquareKm = areaInSquareMeters / 1000000;
+
+                        const areaPolygon1 = turf.area(geojson1);
+                        const areaPolygon2 = turf.area(geojson2);
+
+                        const overlapPercent1 = (areaInSquareMeters / areaPolygon1) * 100;
+                        const overlapPercent2 = (areaInSquareMeters / areaPolygon2) * 100;
+
+                        updateAndShowStatsPanel(areaInSquareKm, overlapPercent1, overlapPercent2);
+
+                    } else {
+                        alert("Poligoanele selectate nu se intersectează.");
+                        selectedFeaturesArray.forEach(f => f.setStyle(null));
+                        selectedFeaturesArray = [];
+                        removeStatsPanel();
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert("Eroare la calcularea matematică a intersecției.");
+                    selectedFeaturesArray.forEach(f => f.setStyle(null));
+                    selectedFeaturesArray = [];
+                    removeStatsPanel();
+                }
+            }
+        } else {
+            selectedFeaturesArray.forEach(f => f.setStyle(null));
+            selectedFeaturesArray = [];
+            intersectionSource.clear();
+            removeStatsPanel();
+        }
+    });
     const drawSource = new ol.source.Vector();
     const drawLayer = new ol.layer.Vector({
         source: drawSource,
