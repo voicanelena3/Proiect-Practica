@@ -31,5 +31,38 @@
 
     <script src="lib/ol.js"></script>
     <script src="js/app.js"></script>
+    <div id="stats-panel" class="hidden">
+    <div class="panel-header">
+        <h4>ANALIZĂ INTERSECȚIE</h4>
+        <span class="badge">Calculat</span>
+    </div>
+    
+    <div class="panel-metric-box">
+        <div class="metric-label">Suprafață Comună</div>
+        <div class="metric-value"><span id="area-val">0.00</span> <span class="metric-unit">km²</span></div>
+    </div>
+    
+    <div class="panel-section-title">Grad de Acoperire Relativ</div>
+    
+    <div class="progress-container">
+        <div class="progress-labels">
+            <span>Produs Principal (1)</span>
+            <span id="percent1-val" class="percent-blue">0.0%</span>
+        </div>
+        <div class="progress-bar-bg">
+            <div id="progress1-bar" class="progress-bar-fill"></div>
+        </div>
+    </div>
+    
+    <div class="progress-container">
+        <div class="progress-labels">
+            <span>Produs Secundar (2)</span>
+            <span id="percent2-val" class="percent-blue">0.0%</span>
+        </div>
+        <div class="progress-bar-bg">
+            <div id="progress2-bar" class="progress-bar-fill"></div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

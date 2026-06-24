@@ -171,30 +171,53 @@ window.onload = function() {
         })
     });
 
+    function removeStatsPanel() {
+        const panel = document.getElementById('stats-panel');
+        if (panel) {
+            panel.classList.add('hidden');
+        }
+    }
+
+    function updateAndShowStatsPanel(areaKm, percent1, percent2) {
+        const panel = document.getElementById('stats-panel');
+        if (!panel) return;
+
+        document.getElementById('area-val').innerText = areaKm.toFixed(2);
+        document.getElementById('percent1-val').innerText = percent1.toFixed(1) + '%';
+        document.getElementById('percent2-val').innerText = percent2.toFixed(1) + '%';
+
+        document.getElementById('progress1-bar').style.width = Math.min(percent1, 100) + '%';
+        document.getElementById('progress2-bar').style.width = Math.min(percent2, 100) + '%';
+
+        panel.classList.remove('hidden');
+    }
+
     map.on('click', function(e) {
         const clickedFeature = map.forEachFeatureAtPixel(e.pixel, function(feature, layer) {
             if (layer === intersectionLayer) return null;
             return feature;
         });
 
-        if (clickedFeature) {//vede aici daca un poligon era deja selectat sau nu
-            if (selectedFeaturesArray.includes(clickedFeature)) {//daca poligonul e selectat
-                clickedFeature.setStyle(null);// atunci il deselecteaza
-                selectedFeaturesArray = selectedFeaturesArray.filter(f => f !== clickedFeature);// aici se sterge intersectia rosie de pe harta
+        if (clickedFeature) {
+            if (selectedFeaturesArray.includes(clickedFeature)) {
+                clickedFeature.setStyle(null);
+                selectedFeaturesArray = selectedFeaturesArray.filter(f => f !== clickedFeature);
                 intersectionSource.clear();
+                removeStatsPanel();
                 return;
             }
 
-            if (selectedFeaturesArray.length === 2) {//daca deja sunt 2 poligoane selectat si noi vrem sa il selectam pe al treilea atunci se intelege ca vrem sa incepem o alta selectie
+            if (selectedFeaturesArray.length === 2) {
                 selectedFeaturesArray.forEach(f => f.setStyle(null));
                 selectedFeaturesArray = [];
                 intersectionSource.clear();
+                removeStatsPanel();
             }
 
-            selectedFeaturesArray.push(clickedFeature);// adaugam poloigonul nou in lista noastra
+            selectedFeaturesArray.push(clickedFeature);
             clickedFeature.setStyle(selectedStyle);
 
-            if (selectedFeaturesArray.length === 2) {// daca avem 2 poligoane selectate
+            if (selectedFeaturesArray.length === 2) {
                 const feature1 = selectedFeaturesArray[0];
                 const feature2 = selectedFeaturesArray[1];
 
@@ -209,7 +232,7 @@ window.onload = function() {
                 });
 
                 try {
-                    const intersectedGeoJSON = turf.intersect(geojson1, geojson2);// analizeaza cele doua module daca se intersecteaza
+                    const intersectedGeoJSON = turf.intersect(geojson1, geojson2);
 
                     if (intersectedGeoJSON) {
                         const intersectionFeature = geojsonFormat.readFeature(intersectedGeoJSON, {
@@ -217,13 +240,9 @@ window.onload = function() {
                             featureProjection: map.getView().getProjection()
                         });
 
-                        intersectionSource.addFeatures([intersectionFeature]);// adauga noua intersectie 
-                    } else {
-                        alert("Poligoanele selectate nu se intersectează.");
-                        selectedFeaturesArray.forEach(f => f.setStyle(null));
-                        selectedFeaturesArray = [];
-                    }
-                    const areaInSquareMeters = turf.area(intersectedGeoJSON);
+                        intersectionSource.addFeatures([intersectionFeature]);
+
+                        const areaInSquareMeters = turf.area(intersectedGeoJSON);
                         const areaInSquareKm = areaInSquareMeters / 1000000;
 
                         const areaPolygon1 = turf.area(geojson1);
@@ -232,23 +251,27 @@ window.onload = function() {
                         const overlapPercent1 = (areaInSquareMeters / areaPolygon1) * 100;
                         const overlapPercent2 = (areaInSquareMeters / areaPolygon2) * 100;
 
-                        alert(
-                            `Calcul Intersecție Reușit!\n\n` +
-                            `• Suprafața afectată (comună): ${areaInSquareKm.toFixed(2)} km²\n` +
-                            `• Acoperire primul poligon: ${overlapPercent1.toFixed(1)}%\n` +
-                            `• Acoperire al doilea poligon: ${overlapPercent2.toFixed(1)}%`
-                        );
+                        updateAndShowStatsPanel(areaInSquareKm, overlapPercent1, overlapPercent2);
+
+                    } else {
+                        alert("Poligoanele selectate nu se intersectează.");
+                        selectedFeaturesArray.forEach(f => f.setStyle(null));
+                        selectedFeaturesArray = [];
+                        removeStatsPanel();
+                    }
                 } catch (err) {
                     console.error(err);
                     alert("Eroare la calcularea matematică a intersecției.");
                     selectedFeaturesArray.forEach(f => f.setStyle(null));
                     selectedFeaturesArray = [];
+                    removeStatsPanel();
                 }
             }
         } else {
             selectedFeaturesArray.forEach(f => f.setStyle(null));
             selectedFeaturesArray = [];
             intersectionSource.clear();
+            removeStatsPanel();
         }
     });
 };
