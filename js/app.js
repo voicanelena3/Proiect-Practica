@@ -1,4 +1,4 @@
-window.onload = function() {
+window.onload = function () {
     const mousePositionControl = new ol.control.MousePosition({
         coordinateFormat: ol.coordinate.createStringXY(4),
         projection: 'EPSG:4326',
@@ -30,7 +30,7 @@ window.onload = function() {
     console.log("Harta și instrumentele de navigare au fost inițializate cu succes!");
 
     const wktFormat = new ol.format.WKT();
-    const geojsonFormat = new ol.format.GeoJSON(); 
+    const geojsonFormat = new ol.format.GeoJSON();
 
     const satelliteSource = new ol.source.Vector();
     const satelliteLayer = new ol.layer.Vector({
@@ -61,28 +61,27 @@ window.onload = function() {
                 width: 4
             }),
             fill: new ol.style.Fill({
-                color: 'rgba(255, 0, 0, 0.5)' 
+                color: 'rgba(255, 0, 0, 0.5)'
             })
         }),
-        zIndex: 100 
+        zIndex: 100
     });
     map.addLayer(intersectionLayer);
-    // Extent saved after manual file upload — used by re-center button
     let uploadedExtent = null;
 
-    $('#json-file').on('change', function(e) {
+    $('#json-file').on('change', function (e) {
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = function (event) {
             try {
                 const response = JSON.parse(event.target.result);
-                vectorSource.clear(); 
+                vectorSource.clear();
                 const manualFeaturesArray = [];
 
                 if (response && response.data && response.data.length > 0) {
-                    response.data.forEach(function(product) {
+                    response.data.forEach(function (product) {
                         if (product.geometry) {
                             try {
                                 const feature = wktFormat.readFeature(product.geometry, {
@@ -95,7 +94,7 @@ window.onload = function() {
                             }
                         }
                     });
-                } 
+                }
                 else if (response.type === "FeatureCollection" || response.type === "Feature") {
                     const geojsonFeatures = geojsonFormat.readFeatures(response, {
                         dataProjection: 'EPSG:4326',
@@ -107,14 +106,12 @@ window.onload = function() {
                 if (manualFeaturesArray.length > 0) {
                     vectorSource.addFeatures(manualFeaturesArray);
 
-                    // Save extent and fit map
                     uploadedExtent = vectorSource.getExtent();
                     map.getView().fit(uploadedExtent, {
                         duration: 1200,
                         padding: [50, 50, 50, 50]
                     });
 
-                    // Activate re-center button
                     const recenterBtn = document.getElementById('btn-recenter');
                     recenterBtn.disabled = false;
                     recenterBtn.title = 'Revenire la datele încărcate';
@@ -130,7 +127,7 @@ window.onload = function() {
         reader.readAsText(file);
     });
 
-    document.getElementById('btn-recenter').addEventListener('click', function() {
+    document.getElementById('btn-recenter').addEventListener('click', function () {
         if (uploadedExtent) {
             map.getView().fit(uploadedExtent, {
                 duration: 1200,
@@ -140,23 +137,59 @@ window.onload = function() {
         }
     });
 
-    $('#search').on('keypress', function(e) {
-        if (e.which === 13) {
-            const query = $(this).val().trim();
-            if (!query) return;
-            
-            const geonamesUsername = 'bambiiiiiiiiiiiiiiii';
-            const geonamesUrl = `https://secure.geonames.org/searchJSON?q=${encodeURIComponent(query)}&maxRows=1&username=${geonamesUsername}`;
+    $('#search').on('keypress', function (e) {
 
-            $(this).css('opacity', '0.5');
+        if (e.which !== 13) {
+            return;
+        }
 
-            $.ajax({
-                url: geonamesUrl,
-                method: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                    if (data && data.geonames && data.geonames.length > 0) {
-                        const location = data.geonames[0];
+        const query = $(this).val().trim();
+
+        if (!query) {
+            return;
+        }
+
+        const geonamesUsername = 'bambiiiiiiiiiiiiiiii';
+
+        const geonamesUrl = `https://secure.geonames.org/searchJSON?name_startsWith=${encodeURIComponent(query)}&maxRows=10&orderby=relevance&isNameRequired=true&cities=cities1000&username=${geonamesUsername}`;
+
+        const resultsContainer = $('#search-results');
+
+        resultsContainer.hide();
+        resultsContainer.empty();
+
+        $(this).css('opacity', '0.5');
+
+        $.ajax({
+            url: geonamesUrl,
+            method: 'GET',
+            dataType: 'json',
+
+            success: function (data) {
+
+                if (!data || !data.geonames || data.geonames.length === 0) {
+                    alert("Locația nu a fost găsită.");
+                    return;
+                }
+
+                resultsContainer.show();
+
+                data.geonames.forEach(function (location) {
+
+                    const item = $(`
+                    <div class="search-result-item">
+                        <div class="search-result-name">
+                            ${location.name}
+                        </div>
+
+                        <div class="search-result-country">
+                            ${location.adminName1 || ''}, ${location.countryName}
+                        </div>
+                    </div>
+                `);
+
+                    item.on('click', function () {
+
                         const lon = parseFloat(location.lng);
                         const lat = parseFloat(location.lat);
 
@@ -166,19 +199,27 @@ window.onload = function() {
                             duration: 1500,
                             easing: ol.easing.easeOut
                         });
-                        $('#search').val(''); 
-                    } else {
-                        alert("Locația nu a fost găsită de GeoNames.");
-                    }
-                },
-                error: function() {
-                    alert("A apărut o eroare la căutarea locației.");
-                },
-                complete: function() {
-                    $('#search').css('opacity', '1');
-                }
-            });
-        }
+
+                        $('#search').val(
+                            `${location.name}, ${location.countryName}`
+                        );
+
+                        resultsContainer.empty();
+                        resultsContainer.hide();
+                    });
+
+                    resultsContainer.append(item);
+                });
+            },
+
+            error: function () {
+                alert("A apărut o eroare la căutarea locației.");
+            },
+
+            complete: function () {
+                $('#search').css('opacity', '1');
+            }
+        });
     });
 
     let selectedFeaturesArray = [];
@@ -214,8 +255,8 @@ window.onload = function() {
         panel.classList.remove('hidden');
     }
 
-    map.on('click', function(e) {
-        const clickedFeature = map.forEachFeatureAtPixel(e.pixel, function(feature, layer) {
+    map.on('click', function (e) {
+        const clickedFeature = map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
             if (layer === intersectionLayer) return null;
             return feature;
         });
@@ -328,14 +369,14 @@ window.onload = function() {
 
     function addDrawInteraction() {
         const value = drawTypeSelect.value;
-        
+
         if (value !== 'None') {
             drawInteraction = new ol.interaction.Draw({
                 source: drawSource,
                 type: value
             });
             map.addInteraction(drawInteraction);
-            
+
             snapInteraction = new ol.interaction.Snap({
                 source: drawSource,
                 pixelTolerance: 15
@@ -358,15 +399,15 @@ window.onload = function() {
         addDrawInteraction();
     });
 
-    clearDrawButton.addEventListener('click', function() {
-        if(confirm("Ești sigur că vrei să ștergi desenele de pe hartă? Datele satelitare vor fi păstrate.")) {
+    clearDrawButton.addEventListener('click', function () {
+        if (confirm("Ești sigur că vrei să ștergi desenele de pe hartă? Datele satelitare vor fi păstrate.")) {
             if (drawInteraction) {
                 drawInteraction.abortDrawing();
             }
             if (typeof drawSource !== 'undefined') {
                 drawSource.clear();
             }
-            
+
             console.log("Desenele manuale au fost șterse, datele din fișier au rămas intacte.");
         }
     });
