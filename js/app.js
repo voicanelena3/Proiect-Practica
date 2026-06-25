@@ -67,7 +67,7 @@ window.onload = function() {
         zIndex: 100 
     });
     map.addLayer(intersectionLayer);
-    // Extent saved after manual file upload — used by re-center button
+    
     let uploadedExtent = null;
 
     $('#json-file').on('change', function(e) {
@@ -107,14 +107,12 @@ window.onload = function() {
                 if (manualFeaturesArray.length > 0) {
                     vectorSource.addFeatures(manualFeaturesArray);
 
-                    // Save extent and fit map
                     uploadedExtent = vectorSource.getExtent();
                     map.getView().fit(uploadedExtent, {
                         duration: 1200,
                         padding: [50, 50, 50, 50]
                     });
 
-                    // Activate re-center button
                     const recenterBtn = document.getElementById('btn-recenter');
                     recenterBtn.disabled = false;
                     recenterBtn.title = 'Revenire la datele încărcate';
@@ -296,6 +294,7 @@ window.onload = function() {
             removeStatsPanel();
         }
     });
+
     const drawSource = new ol.source.Vector();
     const drawLayer = new ol.layer.Vector({
         source: drawSource,
@@ -372,4 +371,120 @@ window.onload = function() {
     });
 
     addDrawInteraction();
+
+   document.getElementById('btn-fetch-copernicus').addEventListener('click', async function() {
+        const button = $(this);
+        const originalText = button.text();
+        
+        let zonaWKT = null;
+        let userGeometry4326 = null;
+        const features = drawSource.getFeatures();
+
+        if (features.length > 0) {
+            const geometry = features[0].getGeometry().clone();
+            geometry.transform(map.getView().getProjection(), 'EPSG:4326');
+            userGeometry4326 = geometry;
+            
+            const wktFormatInternal = new ol.format.WKT({
+                dataProjection: 'EPSG:4326',
+                featureProjection: 'EPSG:4326'
+            });
+            
+            zonaWKT = wktFormatInternal.writeGeometry(geometry, {
+                decimals: 4
+            });
+        }
+
+        if (!zonaWKT) {
+            alert("Te rog să desenezi mai întâi un poligon pe hartă pentru a delimita zona de căutare!");
+            return;
+        }
+
+        button.prop('disabled', true).text('Se încarcă...');
+        satelliteSource.clear();
+
+        const products = await fetchCopernicusProducts('SENTINEL-2', 15, zonaWKT);
+        const copernicusFeatures = [];
+        const wktReader = new ol.format.WKT();
+
+        let userGeoJSON = geojsonFormat.writeGeometryObject(userGeometry4326);
+
+        try {
+            userGeoJSON = turf.buffer(userGeoJSON, 0, { units: 'kilometers' });
+            if (userGeoJSON.type === 'Feature') {
+                userGeoJSON = userGeoJSON.geometry;
+            }
+        } catch (bufferErr) {
+            console.warn("Validarea buffer-ului a eșuat pentru poligonul utilizatorului:", bufferErr);
+        }
+
+        products.forEach(function(product) {
+            let geometryWKT = product.Footprint || product["OData.CSC.Geometry"] || product.Geometry;
+
+            if (geometryWKT) {
+                try {
+                    if (geometryWKT.includes(';')) {
+                        geometryWKT = geometryWKT.split(';').pop();
+                    }
+                    
+                    const wktMatch = geometryWKT.match(/(POLYGON|MULTIPOLYGON)\s*\(.+\)/i);
+                    if (wktMatch) {
+                        geometryWKT = wktMatch[0];
+                    }
+
+                    geometryWKT = geometryWKT.replace(/[\r\n\t]/g, ' ')
+                                             .replace(/\s+/g, ' ')
+                                             .replace(/\(\s+/g, '(')
+                                             .replace(/\s+\)/g, ')')
+                                             .trim();
+
+                    const sceneFeatureInternal = wktReader.readFeature(geometryWKT);
+                    if (sceneFeatureInternal) {
+                        let sceneGeoJSON = geojsonFormat.writeGeometryObject(sceneFeatureInternal.getGeometry());
+                        
+                        try {
+                            sceneGeoJSON = turf.buffer(sceneGeoJSON, 0, { units: 'kilometers' });
+                            if (sceneGeoJSON.type === 'Feature') {
+                                sceneGeoJSON = sceneGeoJSON.geometry;
+                            }
+                        } catch (sceneBufErr) {
+                      
+                        }
+                        
+                    
+                        const intersectedGeoJSON = turf.intersect(userGeoJSON, sceneGeoJSON);
+                        
+                        if (intersectedGeoJSON) {
+                            const clippedFeature = geojsonFormat.readFeature(intersectedGeoJSON, {
+                                dataProjection: 'EPSG:4326',
+                                featureProjection: map.getView().getProjection()
+                            });
+
+                            clippedFeature.setProperties({
+                                name: product.Name,
+                                id: product.Id
+                            });
+                            copernicusFeatures.push(clippedFeature);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Eroare parser WKT sau intersecție pentru produsul:", product.Name, err);
+                }
+            }
+        });
+
+        if (copernicusFeatures.length > 0) {
+            satelliteSource.addFeatures(copernicusFeatures);
+            
+            map.getView().fit(satelliteSource.getExtent(), {
+                duration: 1200,
+                padding: [50, 50, 50, 50]
+            });
+            console.log(`S-au randat cu succes ${copernicusFeatures.length} fragmente decupate.`);
+        } else {
+            alert("Nu s-au găsit produse Copernicus care să se suprapună valid cu zona selectată.");
+        }
+
+        button.prop('disabled', false).text(originalText);
+    });
 };
