@@ -493,11 +493,10 @@ html, body {
     border-color: #cbd5e1;
 }
 
-/* ── Re-center button ── */
 #btn-recenter {
     position: absolute;
     top: 8px;
-    right: 48px;       /* lângă butonul fullscreen care e la right: 8px */
+    right: 48px;
     z-index: 5;
     width: 30px;
     height: 30px;
@@ -548,4 +547,55 @@ html, body {
     .draw-controls {
         flex-direction: column;
     }
+}
+
+.search-box {
+    position: relative;
+}
+
+#search-results {
+    display: none;
+
+    margin-top: 8px;
+
+    background: rgba(15, 23, 42, 0.97);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 8px;
+
+    overflow: hidden;
+    overflow-y: auto;
+    max-height: 220px;
+
+    box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+}
+
+.search-result-item {
+    padding: 12px 14px;
+
+    color: #e2e8f0;
+    font-size: 13px;
+
+    cursor: pointer;
+
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+
+    transition: background 0.2s ease;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background: rgba(56, 189, 248, 0.18);
+}
+
+.search-result-name {
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.search-result-country {
+    font-size: 12px;
+    color: #94a3b8;
 }
