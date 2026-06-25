@@ -45,6 +45,22 @@
 
         <hr>
 
+        <div class="api-box">
+    <label>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 0 1 9-9"/>
+        </svg>
+        <b>Copernicus Data Space</b>
+    </label>
+    <div class="api-controls" style="margin-top: 8px;">
+        <button id="btn-fetch-copernicus" type="button" class="btn-api">
+            Caută Date
+        </button>
+    </div>
+</div>
+
+        <hr>
+
         <div class="draw-box">
             <label for="draw-type">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -84,42 +100,43 @@
             </svg>
         </button>
     </div>
+    
     <div id="mouse-position" class="mouse-position-box"></div>
 
-    <script src="lib/ol.js"></script>
-    <script src="js/app.js"></script>
     <div id="stats-panel" class="hidden">
-    <div class="panel-header">
-        <h4>ANALIZĂ INTERSECȚIE</h4>
-        <span class="badge">Calculat</span>
-    </div>
-    
-    <div class="panel-metric-box">
-        <div class="metric-label">Suprafață Comună</div>
-        <div class="metric-value"><span id="area-val">0.00</span> <span class="metric-unit">km²</span></div>
-    </div>
-    
-    <div class="panel-section-title">Grad de Acoperire Relativ</div>
-    
-    <div class="progress-container">
-        <div class="progress-labels">
-            <span>Produs Principal (1)</span>
-            <span id="percent1-val" class="percent-blue">0.0%</span>
+        <div class="panel-header">
+            <h4>ANALIZĂ INTERSECȚIE</h4>
+            <span class="badge">Calculat</span>
         </div>
-        <div class="progress-bar-bg">
-            <div id="progress1-bar" class="progress-bar-fill"></div>
+        
+        <div class="panel-metric-box">
+            <div class="metric-label">Suprafață Comună</div>
+            <div class="metric-value"><span id="area-val">0.00</span> <span class="metric-unit">km²</span></div>
+        </div>
+        
+        <div class="panel-section-title">Grad de Acoperire Relativ</div>
+        
+        <div class="progress-container">
+            <div class="progress-labels">
+                <span>Produs Principal (1)</span>
+                <span id="percent1-val" class="percent-blue">0.0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div id="progress1-bar" class="progress-bar-fill"></div>
+            </div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-labels">
+                <span>Produs Secundar (2)</span>
+                <span id="percent2-val" class="percent-blue">0.0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div id="progress2-bar" class="progress-bar-fill"></div>
+            </div>
         </div>
     </div>
-    
-    <div class="progress-container">
-        <div class="progress-labels">
-            <span>Produs Secundar (2)</span>
-            <span id="percent2-val" class="percent-blue">0.0%</span>
-        </div>
-        <div class="progress-bar-bg">
-            <div id="progress2-bar" class="progress-bar-fill"></div>
-        </div>
-    </div>
-</div>
-</body>
+
+    <script src="lib/ol.js"></script>
+    <script src="js/copernicus-api.js"></script> <script src="js/app.js"></script> </body>
 </html>

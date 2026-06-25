@@ -13,22 +13,12 @@ html, body {
 }
 
 #map {
-    width: 80%;
-    height: 60%;
     position: absolute;
-    bottom: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-
-    border: 2px solid rgba(56, 189, 248, 0.35);
-    border-radius: 14px;
-    box-shadow:
-        0 20px 50px rgba(0, 0, 0, 0.65),
-        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-        0 0 40px rgba(56, 189, 248, 0.08);
-    overflow: hidden;
-    z-index: 1;
-    transition: box-shadow 0.4s ease;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1; /* Harta stă la baza ecranului */
 }
 
 #map:hover {
@@ -40,17 +30,18 @@ html, body {
 
 #sidebar {
     position: absolute;
-    top: 18%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 20px;
+    left: 20px;
+    transform: none; 
 
     width: 90%;
-    max-width: 460px;
+    max-width: 400px; 
+    height: auto;
     max-height: 85vh;
     overflow-y: auto;
 
-    background: linear-gradient(165deg, rgba(30, 41, 59, 0.92), rgba(20, 28, 41, 0.92));
-    padding: 26px 32px 28px;
+    background: linear-gradient(165deg, rgba(30, 41, 59, 0.95), rgba(20, 28, 41, 0.95));
+    padding: 20px 24px;
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow:
@@ -58,28 +49,25 @@ html, body {
         0 0 0 1px rgba(56, 189, 248, 0.05) inset;
     z-index: 10;
     color: #f8fafc;
-    text-align: center;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 4px; 
 
     animation: sidebarIn 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes sidebarIn {
-    from { opacity: 0; transform: translate(-50%, -55%) scale(0.97); }
-    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
-
-#sidebar::-webkit-scrollbar { width: 6px; }
-#sidebar::-webkit-scrollbar-track { background: transparent; }
-#sidebar::-webkit-scrollbar-thumb {
-    background: rgba(56, 189, 248, 0.35);
-    border-radius: 10px;
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 #sidebar h2 {
-    margin: 0 0 18px 0;
-    font-size: 15px;
+    margin: 0 0 12px 0;
+    font-size: 14px;
     font-weight: 700;
     color: #38bdf8;
     letter-spacing: 1.5px;
@@ -90,23 +78,11 @@ html, body {
     gap: 8px;
 }
 
-#sidebar h2::before,
-#sidebar h2::after {
-    content: '';
-    height: 1px;
-    width: 28px;
-    background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.5));
-}
-
-#sidebar h2::after {
-    background: linear-gradient(90deg, rgba(56, 189, 248, 0.5), transparent);
-}
-
 #sidebar hr {
     border: 0;
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
-    margin: 18px 0;
+    margin: 10px 0;
 }
 
 .section-label {
@@ -493,10 +469,11 @@ html, body {
     border-color: #cbd5e1;
 }
 
+
 #btn-recenter {
     position: absolute;
     top: 8px;
-    right: 48px;
+    right: 48px;      
     z-index: 5;
     width: 30px;
     height: 30px;
@@ -548,54 +525,23 @@ html, body {
         flex-direction: column;
     }
 }
-
-.search-box {
-    position: relative;
-}
-
-#search-results {
-    display: none;
-
-    margin-top: 8px;
-
-    background: rgba(15, 23, 42, 0.97);
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    border-radius: 8px;
-
-    overflow: hidden;
-    overflow-y: auto;
-    max-height: 220px;
-
-    box-shadow: 0 10px 25px rgba(0,0,0,0.35);
-}
-
-.search-result-item {
-    padding: 12px 14px;
-
-    color: #e2e8f0;
-    font-size: 13px;
-
+.btn-api {
+    background-color: #3388ff;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 600;
     cursor: pointer;
-
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-
     transition: background 0.2s ease;
 }
 
-.search-result-item:last-child {
-    border-bottom: none;
+.btn-api:hover {
+    background-color: #2266cc;
 }
 
-.search-result-item:hover {
-    background: rgba(56, 189, 248, 0.18);
-}
-
-.search-result-name {
-    font-weight: 600;
-    color: #ffffff;
-}
-
-.search-result-country {
-    font-size: 12px;
-    color: #94a3b8;
+.btn-api:disabled {
+    background-color: #555555;
+    cursor: not-allowed;
+    opacity: 0.6;
 }
