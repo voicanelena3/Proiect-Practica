@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="ro">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analiză Date Satelitare</title>
-    
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.3.1/ol.css" type="text/css">
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 </head>
+
 <body>
 
     <div id="sidebar">
@@ -46,18 +48,19 @@
         <hr>
 
         <div class="api-box">
-    <label>
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 0 1 9-9"/>
-        </svg>
-        <b>Copernicus Data Space</b>
-    </label>
-    <div class="api-controls" style="margin-top: 8px;">
-        <button id="btn-fetch-copernicus" type="button" class="btn-api">
-            Caută Date
-        </button>
-    </div>
-</div>
+            <label>
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 0 1 9-9" />
+                </svg>
+                <b>Copernicus Data Space</b>
+            </label>
+            <div class="api-controls" style="margin-top: 8px;">
+                <button id="btn-fetch-copernicus" type="button" class="btn-api">
+                    Caută Date
+                </button>
+            </div>
+        </div>
 
         <hr>
 
@@ -79,7 +82,8 @@
                     <option value="Polygon">Poligon</option>
                 </select>
                 <button id="clear-draw" type="button" title="Șterge toate desenele">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
                         <path d="M10 11v6"></path>
@@ -90,17 +94,58 @@
                 </button>
             </div>
         </div>
+        
+        <div class="export-box">
+            <label>
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <b>Export geometrii</b>
+            </label>
+
+            <div class="api-controls" style="margin-top:8px;">
+                <button id="btn-export-geojson" type="button" class="btn-api">
+                    Export GeoJSON
+                </button>
+            </div>
+        </div>
     </div>
 
     <div id="map">
         <button id="btn-recenter" disabled title="Revenire la datele satelitare">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
             </svg>
         </button>
     </div>
-    
+
+    <div id="legend">
+        <h4>Legendă</h4>
+
+        <div class="legend-item">
+            <span class="legend-color legend-upload"></span>
+            <span>Produse încărcate (JSON)</span>
+        </div>
+
+        <div class="legend-item">
+            <span class="legend-color legend-copernicus"></span>
+            <span>Produse Copernicus</span>
+        </div>
+
+        <div class="legend-item">
+            <span class="legend-color legend-intersection"></span>
+            <span>Intersecție</span>
+        </div>
+
+        <div class="legend-item">
+            <span class="legend-color legend-draw"></span>
+            <span>Geometrii desenate</span>
+        </div>
+    </div>
+
     <div id="mouse-position" class="mouse-position-box"></div>
 
     <div id="stats-panel" class="hidden">
@@ -108,14 +153,14 @@
             <h4>ANALIZĂ INTERSECȚIE</h4>
             <span class="badge">Calculat</span>
         </div>
-        
+
         <div class="panel-metric-box">
             <div class="metric-label">Suprafață Comună</div>
             <div class="metric-value"><span id="area-val">0.00</span> <span class="metric-unit">km²</span></div>
         </div>
-        
+
         <div class="panel-section-title">Grad de Acoperire Relativ</div>
-        
+
         <div class="progress-container">
             <div class="progress-labels">
                 <span>Produs Principal (1)</span>
@@ -125,7 +170,7 @@
                 <div id="progress1-bar" class="progress-bar-fill"></div>
             </div>
         </div>
-        
+
         <div class="progress-container">
             <div class="progress-labels">
                 <span>Produs Secundar (2)</span>
@@ -138,5 +183,8 @@
     </div>
 
     <script src="lib/ol.js"></script>
-    <script src="js/copernicus-api.js"></script> <script src="js/app.js"></script> </body>
+    <script src="js/copernicus-api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
 </html>
