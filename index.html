@@ -25,9 +25,7 @@
                 </svg>
                 Caută locație
             </label>
-
             <input type="text" id="search" placeholder="Introduceți orașul...">
-
             <div id="search-results"></div>
         </div>
 
@@ -43,23 +41,6 @@
                 <b>Încarcă produse satelitare (JSON)</b>
             </label>
             <input type="file" id="json-file" accept=".json">
-        </div>
-
-        <hr>
-
-        <div class="api-box">
-            <label>
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                        d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 0 1 9-9" />
-                </svg>
-                <b>Copernicus Data Space</b>
-            </label>
-            <div class="api-controls" style="margin-top: 8px;">
-                <button id="btn-fetch-copernicus" type="button" class="btn-api">
-                    Caută Date
-                </button>
-            </div>
         </div>
 
         <hr>
@@ -82,8 +63,7 @@
                     <option value="Polygon">Poligon</option>
                 </select>
                 <button id="clear-draw" type="button" title="Șterge toate desenele">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
                         <path d="M10 11v6"></path>
@@ -94,7 +74,25 @@
                 </button>
             </div>
         </div>
-        
+
+        <hr>
+
+        <div class="api-box">
+            <label>
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 0 1 9-9" />
+                </svg>
+                <b>Copernicus Data Space</b>
+            </label>
+            <div class="api-controls">
+                <button id="btn-fetch-copernicus" type="button" class="btn-api">
+                    Caută Date
+                </button>
+            </div>
+        </div>
+
+        <hr>
+
         <div class="export-box">
             <label>
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -104,8 +102,7 @@
                 </svg>
                 <b>Export geometrii</b>
             </label>
-
-            <div class="api-controls" style="margin-top:8px;">
+            <div class="api-controls">
                 <button id="btn-export-geojson" type="button" class="btn-api">
                     Export GeoJSON
                 </button>
@@ -124,22 +121,18 @@
 
     <div id="legend">
         <h4>Legendă</h4>
-
         <div class="legend-item">
             <span class="legend-color legend-upload"></span>
             <span>Produse încărcate (JSON)</span>
         </div>
-
         <div class="legend-item">
             <span class="legend-color legend-copernicus"></span>
             <span>Produse Copernicus</span>
         </div>
-
         <div class="legend-item">
             <span class="legend-color legend-intersection"></span>
             <span>Intersecție</span>
         </div>
-
         <div class="legend-item">
             <span class="legend-color legend-draw"></span>
             <span>Geometrii desenate</span>
@@ -153,14 +146,11 @@
             <h4>ANALIZĂ INTERSECȚIE</h4>
             <span class="badge">Calculat</span>
         </div>
-
         <div class="panel-metric-box">
             <div class="metric-label">Suprafață Comună</div>
             <div class="metric-value"><span id="area-val">0.00</span> <span class="metric-unit">km²</span></div>
         </div>
-
         <div class="panel-section-title">Grad de Acoperire Relativ</div>
-
         <div class="progress-container">
             <div class="progress-labels">
                 <span>Produs Principal (1)</span>
@@ -170,7 +160,6 @@
                 <div id="progress1-bar" class="progress-bar-fill"></div>
             </div>
         </div>
-
         <div class="progress-container">
             <div class="progress-labels">
                 <span>Produs Secundar (2)</span>
