@@ -259,7 +259,9 @@ html, body {
 }
 
 #stats-panel.hidden {
-    display: none !important;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-15px);
 }
 
 .panel-header {
@@ -718,7 +720,7 @@ html, body {
     color: #94a3b8;
     cursor: pointer;
     padding: 5px;
-    display: none; /* Este ascuns la început */
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 10;
@@ -732,4 +734,31 @@ html, body {
 #clear-search svg {
     width: 16px;
     height: 16px;
+}
+
+.search-box {
+    position: relative;
+}
+
+#search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.98);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 8px;
+    margin-top: 5px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 200;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+}
+
+.search-result-item:hover {
+    background: rgba(56, 189, 248, 0.15);
+}
+
+.drawing-mode {
+    cursor: crosshair !important;
 }

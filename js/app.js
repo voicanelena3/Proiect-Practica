@@ -274,12 +274,17 @@ window.onload = function () {
         if (!drawTypeSelect) return;
         let value = drawTypeSelect.value;
         if (value === 'Navigare liberă') value = 'None';
+        
+        const mapElement = document.getElementById('map');
 
         if (value !== 'None') {
+            mapElement.classList.add('drawing-mode');
             drawInteraction = new ol.interaction.Draw({ source: drawSource, type: value });
             map.addInteraction(drawInteraction);
-            snapInteraction = new ol.interaction.Snap({ source: drawSource });
+            snapInteraction = new ol.interaction.Snap({ source: drawSource, pixelTolerance: 15 });
             map.addInteraction(snapInteraction);
+        } else {
+            mapElement.classList.remove('drawing-mode');
         }
     }
 
@@ -330,7 +335,24 @@ window.onload = function () {
         });
     }
 
-    // LISTENERUL CORECT PENTRU INTEROGAREA API-ULUI COPERNICUS
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (drawInteraction) {
+                drawInteraction.abortDrawing();
+                map.removeInteraction(drawInteraction);
+            }
+            if (snapInteraction) {
+                map.removeInteraction(snapInteraction);
+            }
+            if (drawTypeSelect && drawTypeSelect.value !== 'None') {
+                drawTypeSelect.value = 'None';
+                addDrawInteraction(); 
+            }
+            
+            console.log("Modul de desenare a fost anulat via tasta Escape.");
+        }
+    });
+
     if (fetchCopernicusBtn) {
         fetchCopernicusBtn.addEventListener('click', async function () {
             satelliteSource.clear();
