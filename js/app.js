@@ -401,15 +401,19 @@ window.onload = function () {
         let value = drawTypeSelect.value;
         if (value === 'Navigare liberă') value = 'None';
         
+        const mapElement = document.getElementById('map');
+
         if (value !== 'None') {
+            mapElement.classList.add('drawing-mode'); // Schimbă cursorul
             drawInteraction = new ol.interaction.Draw({ source: drawSource, type: value });
             map.addInteraction(drawInteraction);
-            
             snapInteraction = new ol.interaction.Snap({ source: drawSource, pixelTolerance: 15 });
             map.addInteraction(snapInteraction);
+        } else {
+            mapElement.classList.remove('drawing-mode'); // Revine la cursorul normal
         }
     }
-
+    
     if (drawTypeSelect) {
         drawTypeSelect.addEventListener('change', function () {
             if (drawInteraction) map.removeInteraction(drawInteraction);
@@ -461,7 +465,6 @@ window.onload = function () {
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            // Dacă suntem în mijlocul unui desen, îl oprim
             if (drawInteraction) {
                 drawInteraction.abortDrawing();
                 map.removeInteraction(drawInteraction);
@@ -469,8 +472,6 @@ window.onload = function () {
             if (snapInteraction) {
                 map.removeInteraction(snapInteraction);
             }
-            
-            // Trecem meniul înapoi pe "Navigare liberă"
             if (drawTypeSelect && drawTypeSelect.value !== 'None') {
                 drawTypeSelect.value = 'None';
                 addDrawInteraction(); 
