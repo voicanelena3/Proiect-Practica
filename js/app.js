@@ -32,6 +32,7 @@ window.onload = function () {
     const wktFormat = new ol.format.WKT();
     const geojsonFormat = new ol.format.GeoJSON();
 
+    // Layer pentru conturul (footprint) produselor Sentinel gasite
     const satelliteSource = new ol.source.Vector();
     const satelliteLayer = new ol.layer.Vector({
         source: satelliteSource,
@@ -42,6 +43,7 @@ window.onload = function () {
     });
     map.addLayer(satelliteLayer);
 
+    // Layer pentru imaginea reala Sentinel-2 (banda B02)
     let sentinelImageLayer = new ol.layer.Image({ source: null });
     map.addLayer(sentinelImageLayer);
 
@@ -76,9 +78,11 @@ window.onload = function () {
     });
     map.addLayer(drawLayer);
 
-    
-    let sentinelCanvas = null;     
-    let sentinelBbox4326 = null;   
+    // =====================================================================
+    // VARIABILE GLOBALE PENTRU ANALIZA B02
+    // =====================================================================
+    let sentinelCanvas = null;     // canvas ascuns cu imaginea Sentinel stocata
+    let sentinelBbox4326 = null;   // [minLon, minLat, maxLon, maxLat] al imaginii
     let sentinelImgW = 0;
     let sentinelImgH = 0;
     let b02ChartInstance = null;
@@ -87,7 +91,8 @@ window.onload = function () {
     const b02Panel = document.getElementById('b02-panel');
     const b02ChartContainer = document.getElementById('b02-chart-container');
 
-   
+    // Stocheaza imaginea Sentinel intr-un canvas ascuns dupa ce e fetchuita,
+    // ca sa putem citi valorile pixelilor fara un API call suplimentar
     function storeSentinelImageInCanvas(imageUrl, bbox4326, width, height) {
         sentinelBbox4326 = bbox4326;
         sentinelImgW = width;
@@ -107,6 +112,7 @@ window.onload = function () {
         img.src = imageUrl;
     }
 
+    // Analiza histograma B02 pe poligonul desenat
     function analyzeB02() {
         if (!sentinelCanvas || !sentinelBbox4326) {
             alert("Nu există imagine satelitară. Apăsați mai întâi 'Caută Date'.");
@@ -119,6 +125,7 @@ window.onload = function () {
             return;
         }
 
+        // Folosim ultimul poligon desenat
         const polygon = drawFeatures[drawFeatures.length - 1];
         const geom = polygon.getGeometry();
 
@@ -136,6 +143,7 @@ window.onload = function () {
         const [minLon, minLat, maxLon, maxLat] = sentinelBbox4326;
         const ctx = sentinelCanvas.getContext('2d');
 
+        // Samplingul pixelilor: grila 100x100 in interiorul bbox-ului poligonului
         const SAMPLES = 100;
         const polyExtent = geom4326.getExtent();
         const lonStep = (polyExtent[2] - polyExtent[0]) / SAMPLES;
@@ -150,11 +158,13 @@ window.onload = function () {
                 const pt = turf.point([lon, lat]);
                 if (!turf.booleanPointInPolygon(pt, turfPoly)) continue;
 
+                // Coordonate geografice -> coordonate canvas
                 const cx = Math.floor((lon - minLon) / (maxLon - minLon) * sentinelImgW);
                 const cy = Math.floor((maxLat - lat) / (maxLat - minLat) * sentinelImgH);
 
                 if (cx < 0 || cy < 0 || cx >= sentinelImgW || cy >= sentinelImgH) continue;
 
+                // Citim valoarea pixelului (imaginea e grayscale: R=G=B)
                 const pixel = ctx.getImageData(cx, cy, 1, 1).data;
                 pixelValues.push(pixel[0]);
             }
@@ -165,6 +175,7 @@ window.onload = function () {
             return;
         }
 
+        // Construim histograma: 16 intervale (bins) intre 0-255
         const BINS = 16;
         const binSize = 256 / BINS;
         const counts = new Array(BINS).fill(0);
@@ -177,7 +188,7 @@ window.onload = function () {
             Math.round(i * binSize) + '–' + Math.round((i + 1) * binSize)
         );
 
-    
+        // Statistici
         const mean = pixelValues.reduce((a, b) => a + b, 0) / pixelValues.length;
         const min = Math.min(...pixelValues);
         const max = Math.max(...pixelValues);
@@ -189,9 +200,11 @@ window.onload = function () {
     }
 
     function renderHistogram(labels, counts, stats) {
+        // Expandam panelul
         b02Panel.classList.add('expanded');
         b02ChartContainer.classList.remove('hidden');
 
+        // Distrugem graficul vechi daca exista
         if (b02ChartInstance) b02ChartInstance.destroy();
 
         const ctx = document.getElementById('b02-chart').getContext('2d');
@@ -232,6 +245,7 @@ window.onload = function () {
             }
         });
 
+        // Statistici sub grafic
         document.getElementById('b02-stats').innerHTML = `
             <div class="b02-stat-card">
                 <div class="b02-stat-label">Pixeli</div>
@@ -264,7 +278,9 @@ window.onload = function () {
         analyzeBtn.addEventListener('click', analyzeB02);
     }
 
-   
+    // =====================================================================
+    // UPLOAD JSON
+    // =====================================================================
     let uploadedExtent = null;
 
     $('#json-file').on('change', function (e) {
@@ -314,7 +330,9 @@ window.onload = function () {
         reader.readAsText(file);
     });
 
-  
+    // =====================================================================
+    // CAUTARE GEONAMES
+    // =====================================================================
     $('#search').on('input', function () {
         const query = $(this).val().trim();
         const resultsContainer = $('#search-results');
@@ -380,7 +398,9 @@ window.onload = function () {
         }
     });
 
-   
+    // =====================================================================
+    // SELECTIE FEATURI SI INTERSECTIE TURF
+    // =====================================================================
     let selectedFeaturesArray = [];
     const selectedStyle = new ol.style.Style({
         stroke: new ol.style.Stroke({ color: '#ffffff', width: 3 }),
@@ -445,7 +465,9 @@ window.onload = function () {
         }
     });
 
-   
+    // =====================================================================
+    // DRAW INTERACTION
+    // =====================================================================
     let drawInteraction, snapInteraction;
     const drawTypeSelect = document.getElementById('draw-type');
     const clearDrawButton = document.getElementById('clear-draw');
@@ -489,6 +511,7 @@ window.onload = function () {
             selectedFeaturesArray = [];
             resetSentinelImageLayer();
 
+            // Resetam si analiza B02
             sentinelCanvas = null;
             sentinelBbox4326 = null;
             analyzeBtn.disabled = true;
@@ -521,7 +544,9 @@ window.onload = function () {
         });
     }
 
-
+    // =====================================================================
+    // COPERNICUS / SENTINEL HUB
+    // =====================================================================
     if (fetchCopernicusBtn) {
         fetchCopernicusBtn.addEventListener('click', async function () {
             satelliteSource.clear();
@@ -581,6 +606,7 @@ window.onload = function () {
                     return;
                 }
 
+                // Desenam conturul (footprint) produselor gasite
                 products.forEach((product, index) => {
                     if (product.geometry) {
                         const olFeature = geojsonFormat.readFeature(product.geometry, {
@@ -605,6 +631,7 @@ window.onload = function () {
                     const dateFrom = "2024-06-01T00:00:00Z";
                     const dateTo = "2024-06-30T23:59:59Z";
 
+                    // Calcul dinamic al dimensiunilor imaginii (respecta limita de 200m/pixel)
                     const [minLon, minLat, maxLon, maxLat] = bbox4326;
                     const avgLat = (minLat + maxLat) / 2;
                     const metersPerDegLon = 111320 * Math.cos(avgLat * Math.PI / 180);
@@ -638,6 +665,7 @@ window.onload = function () {
                         });
                         map.addLayer(sentinelImageLayer);
 
+                        // Stocam imaginea in canvas pentru analiza B02 ulterioara
                         storeSentinelImageInCanvas(imageUrl, bbox4326, imgWidth, imgHeight);
 
                         console.log("Imagine Sentinel-2 afișată cu succes!");
