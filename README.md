@@ -5,20 +5,10 @@ interactive 2D map.
 This project helps solve a common challenge in aerospace and spatial engineering: transforming large volumes of abstract, raw data into an intuitive,
 visual interface for researchers and operators.
 
-Main functionalities:
--Automated Data Mapping: Upon initialization, the system automatically fetches and parses raw metadata from a production file
-(for us: productResponse.json). It interprets the spatial sensor footprints, renders the polygons dynamically with a distinct color and 
-smoothly adjusts the map's view to bound the loaded data.
--Multi-Format Manual Import: Users cand unpload their own geospatial files directly from their local drive. The application features an
-intelligent dual-parsing engine that automatically identifies wheter the file contians standardized WKT (Well-Known-Text) or GeoJson data,
-instantly mapping the shapes into a dedicated secondary vector layer
--Geocoding: Features an integrated search bar powered by the global GeoNames API. When a user types any location, the system queries the web service
-in the background, extracts the mathematical coordinates, and performs a fluid flight animation (pan&zoom) to the destination.
-
 ### Prerequisites
 To run this project locally, you only need a modern web browser like Edge, Chrome, or Firefox, alongside a local development environment server such as the VS Code Live Server extension, Python's built-in http.server, or Node.js http-server.
 
-Deoarece aplicația se conectează direct la API-uri securizate externe de pe o adresă locală, o extensie de browser pentru permisiunea CORS (Cross-Origin Resource Sharing) trebuie să fie instalată și activă în timpul dezvoltării pentru a evita blocajele de tip Preflight (OPTIONS) impuse de browser.
+Since the app connects directly to secure external APIs from a local address, a browser extension for CORS (Cross-Origin Resource Sharing) permission needs to be installed and active during development to avoid Preflight (OPTIONS) blockages imposed by the browser.
 
 ### Architecture & Tech Stack
 -This platform is engineered to run completely client-side, avoiding heavy backend infrastructures or database lags.
