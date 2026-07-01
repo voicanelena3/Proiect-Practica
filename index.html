@@ -193,7 +193,32 @@
                 </button>
                 <div id="b02-chart-container" class="hidden">
                     <canvas id="b02-chart"></canvas>
-                    <div class="b02-stats-grid" id="b02-stats"></div>
+                    <div class="b02-stats-grid" id="b02-stats">
+                        <div class="b02-stat-card">
+                            <div class="b02-stat-label">Pixeli</div>
+                            <div class="b02-stat-value" id="b02-stat-pixeli">—</div>
+                        </div>
+                        <div class="b02-stat-card">
+                            <div class="b02-stat-label">Medie</div>
+                            <div class="b02-stat-value" id="b02-stat-medie">—</div>
+                        </div>
+                        <div class="b02-stat-card">
+                            <div class="b02-stat-label">Min</div>
+                            <div class="b02-stat-value" id="b02-stat-min">—</div>
+                        </div>
+                        <div class="b02-stat-card">
+                            <div class="b02-stat-label">Max</div>
+                            <div class="b02-stat-value" id="b02-stat-max">—</div>
+                        </div>
+                        <div class="b02-stat-card">
+                            <div class="b02-stat-label">Std Dev</div>
+                            <div class="b02-stat-value" id="b02-stat-std">—</div>
+                        </div>
+                        <div class="b02-stat-card">
+                            <div class="b02-stat-label">Interval</div>
+                            <div class="b02-stat-value" id="b02-stat-interval">—</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -280,6 +305,38 @@
             <span class="legend-color legend-draw"></span>
             <span>Geometrii desenate</span>
         </div>
+    </div>
+
+    <div id="cloud-panel" style="display:none;">
+        <button id="cloud-panel-close" title="Închide">&#x2715;</button>
+        <div class="cloud-panel-title">Produs Sentinel-2 L2A</div>
+        <div class="cloud-panel-row">
+            <span class="cloud-panel-label">Data scenei</span>
+            <span class="cloud-panel-value" id="cp-date">—</span>
+        </div>
+        <div class="cloud-panel-row">
+            <span class="cloud-panel-label">ID produs</span>
+            <span class="cloud-panel-value cp-small" id="cp-id">—</span>
+        </div>
+        <div class="cloud-panel-row">
+            <span class="cloud-panel-label">Acoperire nori</span>
+            <span class="cloud-panel-value" id="cp-cc">—</span>
+        </div>
+        <div class="cloud-bar-wrap">
+            <div class="cloud-bar-bg">
+                <div id="cp-bar" class="cloud-bar-fill"></div>
+            </div>
+            <div class="cloud-bar-labels">
+                <span>0%</span><span>50%</span><span>100%</span>
+            </div>
+        </div>
+        <div id="cp-label" class="cloud-panel-status">—</div>
+    </div>
+
+    <div id="map-tooltip" style="display:none;">
+        <b>Sentinel-2 L2A</b>
+        <span id="tooltip-date"></span>
+        <span id="tooltip-cc"></span>
     </div>
 
     <div id="mouse-position" class="mouse-position-box"></div>
