@@ -2,9 +2,10 @@ const CLIENT_ID = "e4214c35-0039-4bbb-a0c3-1a63329accd1";
 const CLIENT_SECRET = "AkvWMNBMjOUTiuHli4UevHuVRm92AGSi";
 
 let accessToken = null;
+let tokenExpiry = 0;
 
 async function getAccessToken() {
-    if (accessToken) {
+    if (accessToken && Date.now() < tokenExpiry) {
         return accessToken;
     }
 
@@ -14,9 +15,7 @@ async function getAccessToken() {
         "https://services.sentinel-hub.com/auth/realms/main/protocol/openid-connect/token",
         {
             method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: body
         }
     );
@@ -24,69 +23,93 @@ async function getAccessToken() {
     if (!response.ok) {
         const errText = await response.text();
         console.error("Eroare la token:", errText);
-        throw new Error("Nu s-a putut obține token-ul.");
+        throw new Error("Nu s-a putut obtine token-ul.");
     }
 
     const data = await response.json();
     accessToken = data.access_token;
+    tokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
     return accessToken;
 }
 
-// Evalscript pentru banda B02 (albastru), cu gain pentru afisare vizuala (normalizare/corectie)
-const EVALSCRIPT_B02 = `
-//VERSION=3
+
+
+const EVALSCRIPTS = {
+
+    b02: `//VERSION=3
 function setup() {
-  return {
-    input: ["B02"],
-    output: { bands: 1, sampleType: "AUTO" } // AUTO scaleaza automat [0,1] -> [0,255]
-  };
+    return { input: ["B02"], output: { bands: 1, sampleType: "AUTO" } };
 }
-
 function evaluatePixel(sample) {
-  // gain = factor de amplificare pentru a face imaginea vizibila
-  // (reflectanta bruta e foarte intunecata fara corectie)
-  let gain = 3.5;
-  let value = sample.B02 * gain;
-  return [value];
-}
-`;
+    return [sample.B02 * 3.5];
+}`,
 
-// Genereaza o imagine PNG reala (banda B02, normalizata) pentru un bbox dat
-// bbox = [minLon, minLat, maxLon, maxLat] in EPSG:4326
-async function fetchSentinelImage(bbox, dateFrom, dateTo, width = 512, height = 512) {
+   
+    truecolor: `//VERSION=3
+function setup() {
+    return { input: ["B02","B03","B04"], output: { bands: 3, sampleType: "AUTO" } };
+}
+function evaluatePixel(sample) {
+    return [sample.B04 * 3.5, sample.B03 * 3.5, sample.B02 * 3.5];
+}`,
+
+    
+    falsecolor: `//VERSION=3
+function setup() {
+    return { input: ["B03","B04","B08"], output: { bands: 3, sampleType: "AUTO" } };
+}
+function evaluatePixel(sample) {
+    return [sample.B08 * 2.5, sample.B04 * 2.5, sample.B03 * 2.5];
+}`,
+
+    
+    ndvi: `//VERSION=3
+function setup() {
+    return { input: ["B04","B08"], output: { bands: 3, sampleType: "AUTO" } }; // FIXED: Changed FLOAT32 to AUTO
+}
+function evaluatePixel(sample) {
+    let ndvi = (sample.B08 - sample.B04) / (sample.B08 + sample.B04 + 1e-10);
+    ndvi = Math.max(-1, Math.min(1, ndvi));
+    if (ndvi < -0.2) return [0.05, 0.05, 0.55];       // apa - albastru
+    if (ndvi < 0.0)  return [0.85, 0.15, 0.05];       // sol gol - rosu
+    if (ndvi < 0.2)  return [0.95, 0.85, 0.05];       // vegetatie slaba - galben
+    if (ndvi < 0.4)  return [0.35, 0.80, 0.15];       // vegetatie moderata - verde deschis
+    return [0.05, 0.50, 0.05];                         // vegetatie densa - verde inchis
+}`,
+
+
+    ndvi_analysis: `//VERSION=3
+function setup() {
+    return { input: ["B04","B08"], output: { bands: 1, sampleType: "AUTO" } };
+}
+function evaluatePixel(sample) {
+    let ndvi = (sample.B08 - sample.B04) / (sample.B08 + sample.B04 + 1e-10);
+    return [(ndvi + 1) / 2];
+}`
+};
+
+async function fetchSentinelImage(bbox, dateFrom, dateTo, width, height, evalscript) {
     const token = await getAccessToken();
+
+    const usedEvalscript = evalscript || EVALSCRIPTS.b02;
 
     const requestBody = {
         input: {
             bounds: {
                 bbox: bbox,
-                properties: {
-                    crs: "http://www.opengis.net/def/crs/EPSG/0/4326"
-                }
+                properties: { crs: "http://www.opengis.net/def/crs/EPSG/0/4326" }
             },
-            data: [
-                {
-                    type: "sentinel-2-l1c",
-                    dataFilter: {
-                        timeRange: {
-                            from: dateFrom,
-                            to: dateTo
-                        }
-                    }
-                }
-            ]
+            data: [{
+                type: "sentinel-2-l1c",
+                dataFilter: { timeRange: { from: dateFrom, to: dateTo } }
+            }]
         },
         output: {
             width: width,
             height: height,
-            responses: [
-                {
-                    identifier: "default",
-                    format: { type: "image/png" }
-                }
-            ]
+            responses: [{ identifier: "default", format: { type: "image/png" } }]
         },
-        evalscript: EVALSCRIPT_B02
+        evalscript: usedEvalscript
     };
 
     const response = await fetch(
@@ -103,19 +126,19 @@ async function fetchSentinelImage(bbox, dateFrom, dateTo, width = 512, height = 
 
     if (!response.ok) {
         const errText = await response.text();
-        console.error(`Eroare Process API: ${response.status}`);
-        console.error("Detalii:", errText);
-        throw new Error(`Eroare la generarea imaginii Sentinel. Status: ${response.status}`);
+        console.error(`Eroare Process API: ${response.status}`, errText);
+        throw new Error(`Eroare la generarea imaginii. Status: ${response.status}`);
     }
 
     const blob = await response.blob();
     return URL.createObjectURL(blob);
 }
 
+
+
 async function searchSentinelProducts(intersectsGeometry) {
     const token = await getAccessToken();
 
-    // IMPORTANT: calea corecta este /catalog/v1/search, NU /api/v1/catalog/search
     const response = await fetch(
         "https://services.sentinel-hub.com/catalog/v1/search",
         {
@@ -135,9 +158,8 @@ async function searchSentinelProducts(intersectsGeometry) {
 
     if (!response.ok) {
         const errText = await response.text();
-        console.error(`Serverul a raspuns cu statusul: ${response.status}`);
-        console.error("Detalii eroare:", errText);
-        throw new Error(`Eroare la interogarea Sentinel Hub. Status: ${response.status}`);
+        console.error(`Eroare catalog: ${response.status}`, errText);
+        throw new Error(`Eroare catalog Sentinel Hub. Status: ${response.status}`);
     }
 
     const result = await response.json();

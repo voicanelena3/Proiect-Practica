@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ro">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,12 +14,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <style>
-        /* === PANEL ANALIZA B02 === */
-        .analysis-box {
+        .viz-mode-box {
             padding: 0 12px;
         }
-
-        .analysis-box > label {
+        .viz-mode-box > label {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -30,103 +27,110 @@
             letter-spacing: 0.05em;
             margin-bottom: 8px;
         }
-
-        .analysis-box > label svg {
-            width: 15px;
-            height: 15px;
-            stroke: #63b3ed;
+        .viz-mode-box > label svg {
+            width: 15px; height: 15px; stroke: #38bdf8;
         }
+        .viz-mode-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .viz-mode-btn {
+            padding: 7px 4px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #94a3b8;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .viz-mode-btn:hover {
+            border-color: #38bdf8;
+            color: #38bdf8;
+        }
+        .viz-mode-btn.active {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: #38bdf8;
+            color: #38bdf8;
+        }
+        .viz-mode-desc {
+            font-size: 10px;
+            color: #475569;
+            text-align: center;
+            margin-top: 4px;
+            min-height: 14px;
+            transition: color 0.2s;
+        }
+
+        .analysis-box { padding: 0 12px; }
+        .analysis-box > label {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: #aaa;
+            text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;
+        }
+        .analysis-box > label svg { width: 15px; height: 15px; stroke: #63b3ed; }
 
         #b02-panel {
             overflow: hidden;
             transition: max-height 0.4s ease;
-            max-height: 40px; /* collapsed - shows just the button */
+            max-height: 40px;
         }
-
-        #b02-panel.expanded {
-            max-height: 520px;
-        }
+        #b02-panel.expanded { max-height: 540px; }
 
         #btn-analyze-b02 {
-            width: 100%;
-            padding: 7px 0;
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            background: transparent;
-            border: 1px solid #63b3ed;
-            color: #63b3ed;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s;
-            margin-bottom: 10px;
+            width: 100%; padding: 7px 0;
+            font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+            background: transparent; border: 1px solid #63b3ed;
+            color: #63b3ed; border-radius: 6px; cursor: pointer;
+            transition: background 0.2s, color 0.2s; margin-bottom: 10px;
         }
-
-        #btn-analyze-b02:hover:not(:disabled) {
-            background: rgba(99, 179, 237, 0.15);
-        }
-
+        #btn-analyze-b02:hover:not(:disabled) { background: rgba(99, 179, 237, 0.15); }
         #btn-analyze-b02:disabled {
-            opacity: 0.35;
-            cursor: not-allowed;
-            border-color: #555;
-            color: #555;
+            opacity: 0.35; cursor: not-allowed;
+            border-color: #555; color: #555;
         }
 
-        #b02-chart-container {
-            padding-top: 4px;
-        }
-
-        #b02-chart-container.hidden {
-            display: none;
-        }
-
-        #b02-chart {
-            width: 100% !important;
-            max-height: 180px;
-        }
+        #b02-chart-container { padding-top: 4px; }
+        #b02-chart-container.hidden { display: none; }
+        #b02-chart { width: 100% !important; max-height: 180px; }
 
         .b02-stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-top: 10px;
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 6px; margin-top: 10px;
         }
-
         .b02-stat-card {
             background: rgba(255,255,255,0.04);
-            border: 1px solid #2d3748;
+            border: 1px solid #2d3748; border-radius: 6px;
+            padding: 6px 8px; text-align: center;
+        }
+        .b02-stat-label { font-size: 9px; color: #718096; text-transform: uppercase; letter-spacing: 0.06em; }
+        .b02-stat-value { font-size: 14px; font-weight: 700; color: #63b3ed; margin-top: 2px; }
+
+        .ndvi-legend {
+            display: none;
+            margin-top: 8px;
             border-radius: 6px;
-            padding: 6px 8px;
-            text-align: center;
+            overflow: hidden;
+            border: 1px solid #2d3748;
         }
-
-        .b02-stat-label {
-            font-size: 9px;
-            color: #718096;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
+        .ndvi-legend.visible { display: block; }
+        .ndvi-legend-bar {
+            height: 10px;
+            background: linear-gradient(to right, #3232b4, #dc321e, #f0d51e, #64c83c, #148214);
         }
-
-        .b02-stat-value {
-            font-size: 14px;
-            font-weight: 700;
-            color: #63b3ed;
-            margin-top: 2px;
-        }
-
-        .b02-hint {
-            font-size: 10px;
-            color: #555;
-            margin: 0 0 8px 0;
-            line-height: 1.4;
-            display: none; /* ascundem hint-ul, butonul e suficient */
+        .ndvi-legend-labels {
+            display: flex; justify-content: space-between;
+            font-size: 9px; color: #64748b; padding: 3px 4px 0;
         }
     </style>
 </head>
 
 <body>
-
     <div id="sidebar">
         <h2>Control Panel</h2>
 
@@ -138,24 +142,20 @@
                 </svg>
                 Caută locație
             </label>
-
             <div class="search-input-container">
                 <input type="text" id="search" placeholder="Introduceți orașul...">
                 <button id="clear-search" type="button" title="Șterge textul">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
             </div>
-
             <div id="search-results"></div>
         </div>
 
         <hr>
 
-        <!-- UPLOAD + CAUTA DATE grupate impreuna -->
         <div class="upload-box">
             <label for="json-file">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -168,8 +168,35 @@
             <input type="file" id="json-file" accept=".json">
         </div>
 
+        <div class="viz-mode-box" style="margin-top: 12px;">
+            <label>
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                </svg>
+                <b>Mod vizualizare</b>
+            </label>
+            <!-- hidden input care tine modul curent -->
+            <input type="hidden" id="viz-mode" value="b02">
+            <div class="viz-mode-grid">
+                <button class="viz-mode-btn active" data-mode="b02" data-desc="Banda albastru (490nm), grayscale">B02 Grayscale</button>
+                <button class="viz-mode-btn" data-mode="truecolor" data-desc="Cum vede ochiul uman (B04+B03+B02)">True Color</button>
+                <button class="viz-mode-btn" data-mode="falsecolor" data-desc="Vegetația apare roșie (B08+B04+B03)">False Color</button>
+                <button class="viz-mode-btn" data-mode="ndvi" data-desc="Verde=vegetație, Roșu=sol gol, Albastru=apă">NDVI</button>
+            </div>
+            <div class="viz-mode-desc" id="viz-mode-desc">Banda albastru (490nm), grayscale</div>
+
+            <div class="ndvi-legend" id="ndvi-legend">
+                <div class="ndvi-legend-bar"></div>
+                <div class="ndvi-legend-labels">
+                    <span>Apă (-1)</span>
+                    <span>Sol (0)</span>
+                    <span>Vegetație (+1)</span>
+                </div>
+            </div>
+        </div>
+
         <div class="api-box" style="border-top: none; padding-top: 0;">
-            <div class="api-controls" style="margin-top: 6px; padding: 0 12px;">
+            <div class="api-controls" style="margin-top: 10px; padding: 0 12px;">
                 <button id="btn-fetch-copernicus" type="button" class="btn-api">
                     Caută Date
                 </button>
@@ -178,19 +205,15 @@
 
         <hr>
 
-        <!-- PANEL ANALIZA B02 - in locul chenarului rosu -->
         <div class="analysis-box">
             <label>
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                 </svg>
-                <b>Analiză Spectral B02</b>
+                <b>Analiză Spectrală</b>
             </label>
             <div id="b02-panel">
-                <p class="b02-hint">Desenați un poligon peste imaginea satelitară, apoi apăsați butonul.</p>
-                <button id="btn-analyze-b02" type="button" disabled>
-                    Analizează B02
-                </button>
+                <button id="btn-analyze-b02" type="button" disabled>Analizează B02</button>
                 <div id="b02-chart-container" class="hidden">
                     <canvas id="b02-chart"></canvas>
                     <div class="b02-stats-grid" id="b02-stats">
@@ -243,12 +266,10 @@
                     <option value="Polygon">Poligon</option>
                 </select>
                 <button id="clear-draw" type="button" title="Șterge toate desenele">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                        <path d="M10 11v6"></path>
-                        <path d="M14 11v6"></path>
+                        <path d="M10 11v6"></path><path d="M14 11v6"></path>
                         <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
                     </svg>
                     Șterge
@@ -265,11 +286,8 @@
                 </svg>
                 <b>Export geometrii</b>
             </label>
-
             <div class="api-controls" style="margin-top:8px;">
-                <button id="btn-export-geojson" type="button" class="btn-api">
-                    Export GeoJSON
-                </button>
+                <button id="btn-export-geojson" type="button" class="btn-api">Export GeoJSON</button>
             </div>
         </div>
     </div>
@@ -277,39 +295,23 @@
     <div id="map">
         <button id="btn-recenter" disabled title="Revenire la datele satelitare">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
             </svg>
         </button>
     </div>
 
     <div id="legend">
         <h4>Legendă</h4>
-
-        <div class="legend-item">
-            <span class="legend-color legend-upload"></span>
-            <span>Produse încărcate (JSON)</span>
-        </div>
-
-        <div class="legend-item">
-            <span class="legend-color legend-copernicus"></span>
-            <span>Produse Copernicus</span>
-        </div>
-
-        <div class="legend-item">
-            <span class="legend-color legend-intersection"></span>
-            <span>Intersecție</span>
-        </div>
-
-        <div class="legend-item">
-            <span class="legend-color legend-draw"></span>
-            <span>Geometrii desenate</span>
-        </div>
+        <div class="legend-item"><span class="legend-color legend-upload"></span><span>Produse încărcate (JSON)</span></div>
+        <div class="legend-item"><span class="legend-color legend-copernicus"></span><span>Produse Copernicus</span></div>
+        <div class="legend-item"><span class="legend-color legend-intersection"></span><span>Intersecție</span></div>
+        <div class="legend-item"><span class="legend-color legend-draw"></span><span>Geometrii desenate</span></div>
     </div>
 
     <div id="cloud-panel" style="display:none;">
         <button id="cloud-panel-close" title="Închide">&#x2715;</button>
-        <div class="cloud-panel-title">Produs Sentinel-2 L2A</div>
+        <div class="cloud-panel-title">Produs Sentinel-2 L1C</div>
         <div class="cloud-panel-row">
             <span class="cloud-panel-label">Data scenei</span>
             <span class="cloud-panel-value" id="cp-date">—</span>
@@ -323,18 +325,14 @@
             <span class="cloud-panel-value" id="cp-cc">—</span>
         </div>
         <div class="cloud-bar-wrap">
-            <div class="cloud-bar-bg">
-                <div id="cp-bar" class="cloud-bar-fill"></div>
-            </div>
-            <div class="cloud-bar-labels">
-                <span>0%</span><span>50%</span><span>100%</span>
-            </div>
+            <div class="cloud-bar-bg"><div id="cp-bar" class="cloud-bar-fill"></div></div>
+            <div class="cloud-bar-labels"><span>0%</span><span>50%</span><span>100%</span></div>
         </div>
         <div id="cp-label" class="cloud-panel-status">—</div>
     </div>
 
     <div id="map-tooltip" style="display:none;">
-        <b>Sentinel-2 L2A</b>
+        <b>Sentinel-2 L1C</b>
         <span id="tooltip-date"></span>
         <span id="tooltip-cc"></span>
     </div>
@@ -346,38 +344,46 @@
             <h4>ANALIZĂ INTERSECȚIE</h4>
             <span class="badge">Calculat</span>
         </div>
-
         <div class="panel-metric-box">
             <div class="metric-label">Suprafață Comună</div>
             <div class="metric-value"><span id="area-val">0.00</span> <span class="metric-unit">km²</span></div>
         </div>
-
         <div class="panel-section-title">Grad de Acoperire Relativ</div>
-
         <div class="progress-container">
             <div class="progress-labels">
                 <span>Produs Principal (1)</span>
                 <span id="percent1-val" class="percent-blue">0.0%</span>
             </div>
-            <div class="progress-bar-bg">
-                <div id="progress1-bar" class="progress-bar-fill"></div>
-            </div>
+            <div class="progress-bar-bg"><div id="progress1-bar" class="progress-bar-fill"></div></div>
         </div>
-
         <div class="progress-container">
             <div class="progress-labels">
                 <span>Produs Secundar (2)</span>
                 <span id="percent2-val" class="percent-blue">0.0%</span>
             </div>
-            <div class="progress-bar-bg">
-                <div id="progress2-bar" class="progress-bar-fill"></div>
-            </div>
+            <div class="progress-bar-bg"><div id="progress2-bar" class="progress-bar-fill"></div></div>
         </div>
     </div>
 
     <script src="lib/ol.js"></script>
     <script src="js/copernicus-api.js"></script>
     <script src="js/app.js"></script>
-</body>
 
+    <script>
+        document.querySelectorAll('.viz-mode-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.viz-mode-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById('viz-mode').value = this.dataset.mode;
+                document.getElementById('viz-mode-desc').textContent = this.dataset.desc;
+                const ndviLegend = document.getElementById('ndvi-legend');
+                if (this.dataset.mode === 'ndvi') {
+                    ndviLegend.classList.add('visible');
+                } else {
+                    ndviLegend.classList.remove('visible');
+                }
+            });
+        });
+    </script>
+</body>
 </html>
